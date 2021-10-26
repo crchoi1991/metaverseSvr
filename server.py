@@ -71,9 +71,20 @@ class Server:
 
     # on packet
     def onPacket(self, sock, sdata):
+        self.broadcast(sdata.encode())
         ss = sdata.split()
         if ss[0] == "join":
             # ss[1] 은 이름
+            # 이미 접속해있는 다른 유저의 아바타 정보를 받아야한다.
+            for k in self.users:
+                u = self.users[k]
+                mesg = f"join {u['name']}"
+                self.send(sock, mesg.encode())
+                mesg = f"avatar {u['name']} {u['avatar']}"
+                self.send(sock, mesg.encode())
+                look = " ".join(map(str,u['look']))
+                mesg = f"look {u['name']} {look}"
+                self.send(sock, mesg.encode())
             # 이미 접속해있는 다른 유저의 이동 정보를 받아야한다.
             for k in self.users:
                 u = self.users[k]
@@ -106,17 +117,6 @@ class Server:
             user['direction'] = float(ss[4])
             user['speed'] = float(ss[5])
             user['aspeed'] = float(ss[6])
-        elif ss[0] == "turn":
-            user['aspeed'] = int(ss[1])
-        elif ss[0] == "world":
-            mesg = f"world {len(self.worldData)}"
-            self.send(sock, mesg.encode())
-        elif ss[0] == "worlddata":
-            idx = int(ss[1])
-            key = list(self.worldData.keys())[idx]
-            wd = self.worldData[key]
-            mesg = f"worlddata {key} {wd[0]} {wd[1]} {wd[2]}"
-            self.send(sock, mesg.encode())
         elif ss[0] == "action":
             if ss[1] not in self.worldData:
                 mesg = f"error {ss[1]} is not world object"
@@ -134,7 +134,6 @@ class Server:
             user['avatar'] = int(ss[2])
         elif ss[0] == "look":
             user['look'] = tuple(map(int, ss[2:]))
-        self.broadcast(sdata.encode())
 
     # on recv
     def onRecv(self, sock):
