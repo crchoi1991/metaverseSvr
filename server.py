@@ -118,18 +118,15 @@ class Server:
             user['speed'] = float(ss[5])
             user['aspeed'] = float(ss[6])
         elif ss[0] == "action":
-            if ss[1] not in self.worldData:
-                mesg = f"error {ss[1]} is not world object"
+            if ss[2] not in self.worldData:
+                mesg = f"error {ss[2]} is not world object"
                 self.send(sock, mesg.encode())
                 return
-            obj = self.worldData[ss[1]][3]
-            if len(ss) == 2:
+            obj = self.worldData[ss[2]][3]
+            if obj != None:
                 ret = obj.runCommand(f"join {user['name']}")
-                print(ret)
-            elif len(ss) == 3:
-                ret = obj.runCommand(f"put {user['name']} {ss[2]}")
-                print(ret)
-            self.send(sock, ret.encode())
+                ret = obj.runCommand(f"put {user['name']} {ss[3]}")
+                self.send(sock, ret.encode())
         elif ss[0] == "avatar":
             user['avatar'] = int(ss[2])
         elif ss[0] == "look":
@@ -184,8 +181,7 @@ class Server:
             wd = self.worldData[k]
             if wd[3] == None: continue
             ret = wd[3].runCommand("board")
-            mesg = f"{k} {ret}"
-            #print(mesg)
+            mesg = f"update {k} {ret}"
             self.broadcast(mesg.encode())
 
     # Select

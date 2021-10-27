@@ -15,6 +15,7 @@ class Reversi:
     def __init__(self):
         self.board = [0]*64
         self.player = [None]*2
+        self.turn = 1
 
     def runCommand(self, s):
         ss = s.split()
@@ -33,6 +34,7 @@ class Reversi:
             ret = "".join(list(map(str, self.board)))
             return ret
         elif ss[0] == "put":
+            """
             turn = 0
             if self.player[0] == ss[1]:
                 turn = 1
@@ -41,4 +43,8 @@ class Reversi:
             if turn == 0: return "fail"
             p = int(ss[2])
             self.board[p] = turn
+            """
+            p = int(ss[2])
+            self.board[p] = self.turn
+            self.turn ^= 3
             return "success"
