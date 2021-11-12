@@ -124,8 +124,10 @@ class Server:
                 return
             obj = self.worldData[ss[2]][3]
             if obj != None:
-                ret = obj.runCommand(f"join {user['name']}")
-                ret = obj.runCommand(f"put {user['name']} {ss[3]}")
+                if len(ss) == 5:
+                    ret = obj.runCommand(f"{ss[3]} {user['name']} {ss[4]}")
+                else:
+                    ret = obj.runCommand(f"{ss[3]} {user['name']}")
                 self.send(sock, ret.encode())
         elif ss[0] == "avatar":
             user['avatar'] = int(ss[2])
