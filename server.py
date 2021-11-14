@@ -114,7 +114,7 @@ class Server:
             self.running = False
         elif ss[0] == "move":
             user['pos'] = (float(ss[2]), float(ss[3]))
-            user['direction'] = float(ss[4])
+            user['dir'] = float(ss[4])
             user['speed'] = float(ss[5])
             user['aspeed'] = float(ss[6])
         elif ss[0] == "action":

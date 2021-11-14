@@ -16,7 +16,7 @@ class Reversi:
         self.board = [3]*64
         # 플레이어들이 현재 접속 안 되어 있다고 표시
         self.players = [0, None, None]
-        self.turn = 1
+        self.turn = 0
 
     def onStart(self):
         self.board = [3]*64
@@ -44,7 +44,8 @@ class Reversi:
         return ret
 
     def onBoard(self):
-        ret = "".join(list(map(str, self.board)))
+        turnColor = ("none", "white", "black")
+        ret = "".join(list(map(str, self.board))) + f" {turnColor[self.turn]}"
         return ret
 
     def onQuit(self):
