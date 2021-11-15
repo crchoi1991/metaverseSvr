@@ -67,44 +67,70 @@ class Server:
     # on close
     def onClose(self, sock):
         self.reads.remove(sock)
+        if sock not in self.users: return
+        user = self.users[sock]
+        print(f"{user['name']} is closed")
+        mesg = f"leave {user['name']}"
+        self.broadcast(mesg.encode())
+        if user['attend'] != None:
+            self.onAction(user, [ None, None, user['attend'], "leave"])
         del self.users[sock]
+
+    # on join
+    def onJoin(self, sock, ss):
+        # ss[1] 은 이름
+        # 이미 접속해있는 다른 유저의 아바타 정보를 받아야한다.
+        for k in self.users:
+            u = self.users[k]
+            mesg = f"join {u['name']}"
+            self.send(sock, mesg.encode())
+            mesg = f"avatar {u['name']} {u['avatar']}"
+            self.send(sock, mesg.encode())
+            look = " ".join(map(str,u['look']))
+            mesg = f"look {u['name']} {look}"
+            self.send(sock, mesg.encode())
+            mesg = f"move {u['name']} {u['pos'][0]} {u['pos'][1]} {u['dir']} {u['speed']} {u['aspeed']}"
+            self.send(sock, mesg.encode())
+        self.users[sock] = {
+            "name" : ss[1],
+            "pos" : (0, 0),
+            "dir" : 0,
+            "speed" : 0,
+            "aspeed" : 0,
+            "avatar" : 0,
+            "look" : (0, 0, 0, 0),
+            "attend" : None
+        }
+        u = self.users[sock]
+        mesg = f"move {u['name']} {u['pos'][0]} {u['pos'][1]} {u['dir']} {u['speed']} {u['aspeed']}"
+        self.broadcast(mesg.encode())
+        # 월드 데이터를 보낸다.
+        for k in self.worldData:
+            wd = self.worldData[k]
+            mesg = f"worlddata {k} {wd[0]} {wd[1]} {wd[2]}"
+            self.send(sock, mesg.encode())
+
+    # on action
+    def onAction(self, user, ss):
+        if ss[2] not in self.worldData:
+            return f"error {ss[2]} is not world object"
+        obj = self.worldData[ss[2]][3]
+        if obj == None:
+            return f"error {ss[2]} has no action"
+        if ss[3] == "join":
+            user['attend'] = ss[2]
+            return obj.runCommand(f"join {user['name']}")
+        if ss[3] == "leave":
+            user['leave'] = ss[2]
+            return obj.runCommand(f"leave {user['name']}")
+        return obj.runCommand(f"{ss[3]} {user['name']} {ss[4]}")
 
     # on packet
     def onPacket(self, sock, sdata):
         self.broadcast(sdata.encode())
         ss = sdata.split()
         if ss[0] == "join":
-            # ss[1] 은 이름
-            # 이미 접속해있는 다른 유저의 아바타 정보를 받아야한다.
-            for k in self.users:
-                u = self.users[k]
-                mesg = f"join {u['name']}"
-                self.send(sock, mesg.encode())
-                mesg = f"avatar {u['name']} {u['avatar']}"
-                self.send(sock, mesg.encode())
-                look = " ".join(map(str,u['look']))
-                mesg = f"look {u['name']} {look}"
-                self.send(sock, mesg.encode())
-            # 이미 접속해있는 다른 유저의 이동 정보를 받아야한다.
-            for k in self.users:
-                u = self.users[k]
-                mesg = f"move {u['name']} {u['pos']} {u['dir']} {u['speed']}"
-                self.send(sock, mesg.encode())
-            self.users[sock] = {
-                "name" : ss[1],
-                "pos" : (0, 0),
-                "dir" : 0,
-                "speed" : 0,
-                "aspeed" : 0
-            }
-            u = self.users[sock]
-            mesg = f"move {u['name']} {u['pos']} {u['dir']} {u['speed']}"
-            self.broadcast(mesg.encode())
-            # 월드 데이터를 보낸다.
-            for k in self.worldData:
-                wd = self.worldData[k]
-                mesg = f"worlddata {k} {wd[0]} {wd[1]} {wd[2]}"
-                self.send(sock, mesg.encode())
+            self.onJoin(sock, ss)
             return
         if sock not in self.users:
             print("Error : Unknown user message")
@@ -118,17 +144,8 @@ class Server:
             user['speed'] = float(ss[5])
             user['aspeed'] = float(ss[6])
         elif ss[0] == "action":
-            if ss[2] not in self.worldData:
-                mesg = f"error {ss[2]} is not world object"
-                self.send(sock, mesg.encode())
-                return
-            obj = self.worldData[ss[2]][3]
-            if obj != None:
-                if len(ss) == 5:
-                    ret = obj.runCommand(f"{ss[3]} {user['name']} {ss[4]}")
-                else:
-                    ret = obj.runCommand(f"{ss[3]} {user['name']}")
-                self.send(sock, ret.encode())
+            mesg = f"action {ss[2]} {ss[3]} "+self.onAction(user, ss)
+            self.send(sock, mesg.encode())
         elif ss[0] == "avatar":
             user['avatar'] = int(ss[2])
         elif ss[0] == "look":
@@ -162,7 +179,6 @@ class Server:
         print(sdata)
         self.onPacket(sock, sdata)
         return
-
         
     def onIdle(self):
         #print(f"onIdle({self.curTick})")
@@ -177,7 +193,7 @@ class Server:
             x = u['pos'][0] + u['speed'] * math.cos(theta) * Server.TimeTick
             y = u['pos'][1] + u['speed'] * math.sin(theta) * Server.TimeTick
             u['pos'] = (x, y)
-            mesg = f"/move {self.curTick} {u['name']} {u['pos']} {u['dir']} {u['speed']}"
+            mesg = f"move {u['name']} {u['pos'][0]} {u['pos'][1]} {u['dir']} {u['speed']} {u['aspeed']}"
             self.broadcast(mesg.encode())
         for k in self.worldData:
             wd = self.worldData[k]
@@ -206,7 +222,10 @@ class Server:
     # Send
     def send(self, sock, data):
         packet = ("%04d"%len(data)).encode()+data
-        sock.send(packet)
+        try:
+            sock.send(packet)
+        except socket.error:
+            pass
                 
     # Broadcast
     def broadcast(self, data):

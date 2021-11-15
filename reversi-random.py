@@ -7,7 +7,7 @@ import random
 isRunning = True
 reversiPos = None       # 리버시 위치
 turnColor = None
-curTurn = None
+curTurn = "none"
 hints = []
 
 def work1(sock):
@@ -44,40 +44,46 @@ def work1(sock):
         elif ss[0] == "worlddata":
             if ss[1] == "Reversi":
                 reversiPos = (float(ss[2]), float(ss[3]))
-        elif ss[0] == "reversiplayer":
-            if ss[1] == "join":
-                turnColor = ss[2]
+        elif ss[0] == "action":
+            if ss[1] == "Reversi" and ss[2] == "join":
+                turnColor = ss[3]
                 print("나의 돌 색깔은 %s."%turnColor)
         else:
             print(sdata)
 
 def work2(sock):
     global isRunning, reversiPos, turnColor, curTurn, hints
-    # reversiplayer란 이름으로 join
-    send(sock, "join reversiplayer")
-    send(sock, "avatar reversiplayer 0")
-    send(sock, "look reversiplayer 0 0 0 0 0")
+    # {name}란 이름으로 join
+    name = f"reversi_{random.randrange(1, 10000):04}"
+    send(sock, f"join {name}")
+    send(sock, f"avatar {name} 0")
+    send(sock, f"look {name} 0 0 0 0 0")
     # 리버시 게임판으로 자동 이동하기 위해서 reversiPos 기다림
     while reversiPos == None:
         time.sleep(5.0)
     # reversi 판 있는 곳의 각도 구하기
     rangle = math.degrees(math.atan2(reversiPos[1], reversiPos[0]))
-    send(sock, f"move reversiplayer 0 0 {rangle} 1 0")
-    rdistance = math.sqrt(reversiPos[0]**2 + reversiPos[1]**2)-1.0
+    send(sock, f"move {name} 0 0 {rangle} 1 0")
+    rdistance = math.sqrt(reversiPos[0]**2 + reversiPos[1]**2)-1.5
     time.sleep(rdistance)
     finalPosX = rdistance*math.cos(math.radians(rangle))
     finalPosY = rdistance*math.sin(math.radians(rangle))
-    send(sock, f"move reversiplayer {finalPosX} {finalPosY} {rangle} 0 0")
-    # reversi join
-    send(sock, "action reversiplayer Reversi join")
-    # 게임이 끝날때까지 계속
+    send(sock, f"move {name} {finalPosX} {finalPosY} {rangle} 0 0")
     while True:
-        # 현재의 턴이 내 턴인 경우
-        print(turnColor, curTurn)
-        if turnColor != None and curTurn == turnColor and len(hints) > 0:
-            p = random.choice(hints)
-            send(sock, f"action reversiplayer Reversi place {p}")
-        time.sleep(2.5)
+        # reversi join
+        send(sock, f"action {name} Reversi join")
+        # 게임이 시작할때까지 기다림
+        while curTurn == "none":
+            time.sleep(2.5)
+        # 게임이 끝날때까지 계속
+        while curTurn != "none":
+            # 현재의 턴이 내 턴인 경우
+            if curTurn == turnColor and len(hints) > 0:
+                p = random.choice(hints)
+                send(sock, f"action {name} Reversi place {p}")
+            time.sleep(2.5)
+        print("Quit play")
+        time.sleep(2.0)
     
     """
     while isRunning:
