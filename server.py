@@ -5,7 +5,7 @@ import math     # math module
 import os.path  # file 또는 directory 검사용
 
 class Server:
-    TimeTick = 5.0      # 하나의 틱 길이 (초단위)
+    TimeTick = 2.0      # 하나의 틱 길이 (초단위)
     
     # Constructor
     def __init__(self, port):

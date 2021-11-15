@@ -81,7 +81,7 @@ def work2(sock):
             if curTurn == turnColor and len(hints) > 0:
                 p = random.choice(hints)
                 send(sock, f"action {name} Reversi place {p}")
-            time.sleep(2.5)
+            time.sleep(1.0)
         print("Quit play")
         time.sleep(2.0)
     
