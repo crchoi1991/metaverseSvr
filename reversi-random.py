@@ -9,9 +9,10 @@ reversiPos = None       # 리버시 위치
 turnColor = None
 curTurn = "none"
 hints = []
+name = None
 
 def work1(sock):
-    global isRunning, reversiPos, turnColor, curTurn, hints
+    global isRunning, reversiPos, turnColor, curTurn, hints, name
     while isRunning:
         try:
             data = sock.recv(4)
@@ -45,14 +46,15 @@ def work1(sock):
             if ss[1] == "Reversi":
                 reversiPos = (float(ss[2]), float(ss[3]))
         elif ss[0] == "action":
-            if ss[1] == "Reversi" and ss[2] == "join":
-                turnColor = ss[3]
+            print(sdata)
+            if ss[1] == name and ss[2] == "Reversi" and ss[3] == "join":
+                turnColor = ss[4]
                 print("나의 돌 색깔은 %s."%turnColor)
         else:
             print(sdata)
 
 def work2(sock):
-    global isRunning, reversiPos, turnColor, curTurn, hints
+    global isRunning, reversiPos, turnColor, curTurn, hints, name
     # {name}란 이름으로 join
     name = f"reversi_{random.randrange(1, 10000):04}"
     send(sock, f"join {name}")

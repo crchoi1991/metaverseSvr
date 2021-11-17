@@ -127,7 +127,6 @@ class Server:
 
     # on packet
     def onPacket(self, sock, sdata):
-        self.broadcast(sdata.encode())
         ss = sdata.split()
         if ss[0] == "join":
             self.onJoin(sock, ss)
@@ -144,8 +143,13 @@ class Server:
             user['speed'] = float(ss[5])
             user['aspeed'] = float(ss[6])
         elif ss[0] == "action":
-            mesg = f"action {ss[2]} {ss[3]} "+self.onAction(user, ss)
-            self.send(sock, mesg.encode())
+            ret = self.onAction(user, ss)
+            print(f"action : {ret}")
+            mesg = f"action {ss[1]} {ss[2]} {ss[3]} "+ret
+            if ret[:4] == "quit":
+                self.broadcast(mesg.encode())
+            else:
+                self.send(sock, mesg.encode())
         elif ss[0] == "avatar":
             user['avatar'] = int(ss[2])
         elif ss[0] == "look":

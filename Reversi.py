@@ -58,7 +58,7 @@ class Reversi:
         self.players = [ 0, None, None ]
         self.turn = 0
         # 결과값을 만듭니다.
-        return self.onBoard()
+        return f"quit {w} {b}"
         
     def onLeave(self, ss):
         # ss[1]이 플레이어에 있는지 검사한다.
