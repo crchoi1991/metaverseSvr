@@ -142,18 +142,18 @@ class Server:
             user['dir'] = float(ss[4])
             user['speed'] = float(ss[5])
             user['aspeed'] = float(ss[6])
+            self.broadcast(sdata.encode())
         elif ss[0] == "action":
             ret = self.onAction(user, ss)
             print(f"action : {ret}")
             mesg = f"action {ss[1]} {ss[2]} {ss[3]} "+ret
-            if ret[:4] == "quit":
-                self.broadcast(mesg.encode())
-            else:
-                self.send(sock, mesg.encode())
+            self.broadcast(mesg.encode())
         elif ss[0] == "avatar":
             user['avatar'] = int(ss[2])
+            self.broadcast(sdata.encode())
         elif ss[0] == "look":
             user['look'] = tuple(map(int, ss[2:]))
+            self.broadcast(sdata.encode())
 
     # on recv
     def onRecv(self, sock):
