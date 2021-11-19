@@ -16,7 +16,7 @@ class Reversi:
         self.board = [3]*64
         # 플레이어들이 현재 접속 안 되어 있다고 표시
         self.players = [0, None, None]
-        self.turn = 1
+        self.turn = 0
 
     def onStart(self):
         self.board = [3]*64
@@ -30,13 +30,13 @@ class Reversi:
     def onJoin(self, ss):
         if self.players[1] == None:
             self.players[1] = ss[1]
-            ret = f"{ss[1]} join white"
+            ret = "white"
             self.players[0] += 1
         elif self.players[2] == None:
             self.players[2] = ss[1]
-            ret = f"{ss[1]} join black"
+            ret = "black"
             self.players[0] += 1
-        else: return f"{ss[1]} join refuse"
+        else: return "refuse"
         print(f"{ss[1]}이 게임에 {ret}로 참여합니다.")
         # 현재 플레이어 2명이 모였으면 플레이를 시작하도록 합니다.
         if self.players[0] == 2:
@@ -44,7 +44,8 @@ class Reversi:
         return ret
 
     def onBoard(self):
-        ret = "".join(list(map(str, self.board)))
+        turnColor = ("none", "white", "black")
+        ret = "".join(list(map(str, self.board))) + f" {turnColor[self.turn]}"
         return ret
 
     def onQuit(self):
@@ -55,9 +56,9 @@ class Reversi:
             elif t == 2: b += 1
         # players를 초기화하도록 합니다.
         self.players = [ 0, None, None ]
+        self.turn = 0
         # 결과값을 만듭니다.
-        mesg = f"quit {w} {b} {self.onBoard()}"
-        return mesg
+        return f"quit {w} {b}"
         
     def onLeave(self, ss):
         # ss[1]이 플레이어에 있는지 검사한다.
@@ -70,10 +71,10 @@ class Reversi:
 
     def onPlace(self, ss):
         # place 명령을 실행한 플레이어가 현재 턴 소유자가 아니면 무시한다.
-        if self.players[self.turn] != ss[1]: return f"{ss[1]} fail"
+        if self.players[self.turn] != ss[1]: return f"fail"
         p = int(ss[2])
         # 놓을 위치가 놓을 수 없는 위치인 경우 무시한다.
-        if self.board[p] != 0: return f"{ss[1]} fail"
+        if self.board[p] != 0: return f"fail"
         # 보드의 p 위치에 돌을 놓습니다.
         self.board[p] = self.turn
         # p위치에 돌을 놓을 경우 바뀌어야할 돌들의 리스트를 얻어옵니다.
